@@ -12,6 +12,7 @@ export interface Note {
   department: string;
   year: string;
   semester: string;
+  isFavorite?: boolean;
 }
 
 export interface Exam {
@@ -27,6 +28,7 @@ export interface Exam {
   university: string;
   department: string;
   questions?: Question[];
+  isFavorite?: boolean;
 }
 
 export interface Question {
@@ -34,6 +36,18 @@ export interface Question {
   text: string;
   options: string[];
   correctAnswer: number;
+}
+
+export interface Article {
+  id: number;
+  title: string;
+  author: string;
+  date: string;
+  likes: number;
+  downloads: number;
+  content: string;
+  tags: string[];
+  isFavorite?: boolean;
 }
 
 export interface User {
@@ -47,6 +61,12 @@ export interface User {
   joinDate: string;
   notes: Note[];
   exams: Exam[];
+  articles?: Article[];
+  favorites?: {
+    notes: number[];
+    exams: number[];
+    articles: number[];
+  };
   followers: number;
   following: number;
 }
