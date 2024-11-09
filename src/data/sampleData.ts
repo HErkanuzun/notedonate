@@ -8,7 +8,10 @@ export const popularNotes = [
     likes: 156,
     downloads: 89,
     imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop",
-    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf",
+    university: "Boğaziçi University",
+    department: "Mathematics",
+    year: "2024",
+    semester: "Spring",
     content: "# Integration Techniques\n\n## 1. Substitution Method\n\nThe substitution method is used when...\n\n## 2. Integration by Parts\n\nThis technique is based on the formula..."
   },
   {
@@ -20,7 +23,10 @@ export const popularNotes = [
     likes: 234,
     downloads: 167,
     imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop",
-    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf",
+    university: "Middle East Technical University",
+    department: "Computer Engineering",
+    year: "2024",
+    semester: "Spring",
     content: "# Binary Trees\n\n## Basic Concepts\n\nA binary tree is a tree data structure where each node has at most two children..."
   },
   {
@@ -32,7 +38,10 @@ export const popularNotes = [
     likes: 198,
     downloads: 145,
     imageUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop",
-    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf",
+    university: "Istanbul Technical University",
+    department: "Chemistry",
+    year: "2024",
+    semester: "Spring",
     content: "# Alkenes\n\n## Structure and Bonding\n\nAlkenes are hydrocarbons containing a carbon-carbon double bond..."
   },
   {
@@ -44,7 +53,10 @@ export const popularNotes = [
     likes: 167,
     downloads: 123,
     imageUrl: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=800&auto=format&fit=crop",
-    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf"
+    university: "Bilkent University",
+    department: "Mathematics",
+    year: "2024",
+    semester: "Spring"
   },
   {
     id: 5,
@@ -55,7 +67,10 @@ export const popularNotes = [
     likes: 289,
     downloads: 201,
     imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop",
-    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf"
+    university: "Koç University",
+    department: "Physics",
+    year: "2024",
+    semester: "Spring"
   },
   {
     id: 6,
@@ -66,7 +81,10 @@ export const popularNotes = [
     likes: 178,
     downloads: 134,
     imageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&auto=format&fit=crop",
-    fileUrl: "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf"
+    university: "Hacettepe University",
+    department: "Computer Engineering",
+    year: "2024",
+    semester: "Spring"
   }
 ];
 
@@ -76,10 +94,12 @@ export const popularExams = [
     title: "Veri Yapıları Final Sınavı",
     subject: "Computer Science",
     professor: "Prof. Dr. Ahmet Yılmaz",
-    term: "Bahar 2024",
+    term: "Spring",
     year: "2024",
     likes: 245,
     downloads: 189,
+    university: "Middle East Technical University",
+    department: "Computer Engineering",
     questions: [
       {
         id: 1,
@@ -106,10 +126,12 @@ export const popularExams = [
     title: "Lineer Cebir Vize Sınavı",
     subject: "Mathematics",
     professor: "Doç. Dr. Ayşe Demir",
-    term: "Güz 2023",
+    term: "Fall",
     year: "2023",
     likes: 178,
     downloads: 156,
+    university: "Boğaziçi University",
+    department: "Mathematics",
     questions: [
       {
         id: 1,
@@ -124,15 +146,37 @@ export const popularExams = [
     title: "Fizik II Final Sınavı",
     subject: "Physics",
     professor: "Prof. Dr. Mehmet Kaya",
-    term: "Bahar 2024",
+    term: "Spring",
     year: "2024",
     likes: 203,
     downloads: 167,
+    university: "Istanbul Technical University",
+    department: "Physics",
     questions: [
       {
         id: 1,
         text: "Coulomb kanunu hangi fiziksel büyüklükler arasındaki ilişkiyi açıklar?",
         options: ["Kütle-Kuvvet", "Yük-Kuvvet", "Hız-İvme", "Basınç-Hacim"],
+        correctAnswer: 1
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: "Organik Kimya Final Sınavı",
+    subject: "Chemistry",
+    professor: "Prof. Dr. Zeynep Aydın",
+    term: "Spring",
+    year: "2024",
+    likes: 167,
+    downloads: 145,
+    university: "Hacettepe University",
+    department: "Chemistry",
+    questions: [
+      {
+        id: 1,
+        text: "Alkanların genel formülü nedir?",
+        options: ["CnH2n", "CnH2n+2", "CnH2n-2", "CnHn"],
         correctAnswer: 1
       }
     ]

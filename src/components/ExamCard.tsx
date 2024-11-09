@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThumbsUp, Download, Share2, Calendar } from 'lucide-react';
+import { ThumbsUp, Download, Share2, Building2, GraduationCap, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Exam } from '../types';
 
@@ -17,14 +17,14 @@ function ExamCard({ exam, isDark }: ExamCardProps) {
         ${isDark ? 'border-gray-700' : 'border-gray-200'} shadow-lg hover:shadow-xl`}
       >
         <div className="p-6">
-          <div className="flex items-center gap-2 text-sm text-purple-600 mb-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
             <span className={`px-3 py-1 rounded-full 
-              ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+              ${isDark ? 'bg-purple-900/30' : 'bg-purple-100'} text-purple-600`}>
               {exam.subject}
             </span>
-            <span className="flex items-center gap-1">
-              <Calendar size={14} />
-              {exam.year}
+            <span className={`px-3 py-1 rounded-full 
+              ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'} text-blue-600`}>
+              {exam.term} {exam.year}
             </span>
           </div>
           
@@ -32,10 +32,19 @@ function ExamCard({ exam, isDark }: ExamCardProps) {
             {exam.title}
           </h3>
           
-          <div className="flex items-center gap-2 text-sm opacity-75 mb-4">
-            <span>{exam.professor}</span>
-            <span>•</span>
-            <span>{exam.term}</span>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2 text-sm opacity-75">
+              <Building2 size={16} />
+              <span>{exam.university}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm opacity-75">
+              <GraduationCap size={16} />
+              <span>{exam.department}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm opacity-75">
+              <User size={16} />
+              <span>{exam.professor}</span>
+            </div>
           </div>
           
           <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">

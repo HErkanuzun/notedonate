@@ -9,6 +9,7 @@ import ExamDetail from './pages/ExamDetail';
 import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import AboutPage from './pages/AboutPage';
 import OfflineAlert from './components/OfflineAlert';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -45,6 +46,7 @@ function App() {
                 <Route path="/notes/:id" element={<NoteDetail isDark={isDark} />} />
                 <Route path="/exams" element={<ExamsPage isDark={isDark} />} />
                 <Route path="/exams/:id" element={<ExamDetail isDark={isDark} />} />
+                <Route path="/about" element={<AboutPage isDark={isDark} />} />
                 <Route path="/profile" element={
                   <PrivateRoute>
                     <ProfilePage isDark={isDark} />

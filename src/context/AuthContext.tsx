@@ -7,7 +7,7 @@ import {
   updateProfile,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, enableNetwork, disableNetwork } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, AuthState } from '../types';
 
@@ -32,23 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle online/offline status
   useEffect(() => {
-    const handleOnline = async () => {
-      setIsOnline(true);
-      try {
-        await enableNetwork(db);
-      } catch (error) {
-        console.error('Error enabling network:', error);
-      }
-    };
-
-    const handleOffline = async () => {
-      setIsOnline(false);
-      try {
-        await disableNetwork(db);
-      } catch (error) {
-        console.error('Error disabling network:', error);
-      }
-    };
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -60,72 +45,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let unsubscribe = () => {};
-
-    const setupAuthListener = async () => {
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        try {
-          if (firebaseUser) {
-            const userDocRef = doc(db, 'users', firebaseUser.uid);
-            const userDoc = await getDoc(userDocRef);
-            
-            if (userDoc.exists()) {
-              const userData = userDoc.data() as Omit<User, 'id'>;
-              setState({
-                isLoggedIn: true,
-                user: {
-                  id: firebaseUser.uid,
-                  email: firebaseUser.email!,
-                  name: userData.name || firebaseUser.displayName || '',
-                  avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
-                  ...userData
-                },
-                loading: false,
-                error: null
-              });
-            } else {
-              // Handle case where user exists in Auth but not in Firestore
-              setState({
-                isLoggedIn: true,
-                user: {
-                  id: firebaseUser.uid,
-                  email: firebaseUser.email!,
-                  name: firebaseUser.displayName || '',
-                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
-                  bio: '',
-                  university: '',
-                  department: '',
-                  joinDate: new Date().toISOString(),
-                  notes: [],
-                  exams: [],
-                  followers: 0,
-                  following: 0
-                },
-                loading: false,
-                error: null
-              });
-            }
-          } else {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as Omit<User, 'id'>;
             setState({
-              isLoggedIn: false,
-              user: null,
+              isLoggedIn: true,
+              user: {
+                id: firebaseUser.uid,
+                email: firebaseUser.email!,
+                name: userData.name || firebaseUser.displayName || '',
+                avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
+                ...userData
+              },
+              loading: false,
+              error: null
+            });
+          } else {
+            // Create default user document if it doesn't exist
+            const defaultUserData: Omit<User, 'id'> = {
+              email: firebaseUser.email!,
+              name: firebaseUser.displayName || '',
+              avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
+              bio: '',
+              university: '',
+              department: '',
+              joinDate: new Date().toISOString(),
+              notes: [],
+              exams: [],
+              followers: 0,
+              following: 0
+            };
+
+            await setDoc(userDocRef, defaultUserData);
+
+            setState({
+              isLoggedIn: true,
+              user: {
+                id: firebaseUser.uid,
+                ...defaultUserData
+              },
               loading: false,
               error: null
             });
           }
-        } catch (error) {
-          console.error('Auth state change error:', error);
-          // Keep existing session state on error
-          setState(prev => ({
-            ...prev,
+        } else {
+          setState({
+            isLoggedIn: false,
+            user: null,
             loading: false,
-            error: 'Authentication error occurred'
-          }));
+            error: null
+          });
         }
-      });
-    };
+      } catch (error) {
+        console.error('Auth state change error:', error);
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Authentication error occurred. Please try again later.'
+        }));
+      }
+    });
 
-    setupAuthListener();
     return () => unsubscribe();
   }, []);
 
@@ -195,10 +180,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateUserProfile = useCallback(async (data: Partial<User>) => {
+    if (!auth.currentUser) {
+      throw new Error('No authenticated user');
+    }
+
     setState(prev => ({ ...prev, loading: true, error: null }));
+    
     try {
-      if (!auth.currentUser) throw new Error('No authenticated user');
-      
       if (data.name) {
         await updateProfile(auth.currentUser, { displayName: data.name });
       }

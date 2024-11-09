@@ -1,5 +1,5 @@
 import React from 'react';
-import { Book, Moon, Sun, User, Globe, LogOut } from 'lucide-react';
+import { Book, Moon, Sun, User, LogOut, FileText, GraduationCap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LanguageSelector from './LanguageSelector';
 import { useLanguage } from '../context/LanguageContext';
@@ -14,6 +14,15 @@ function Header({ isDark, setIsDark }: HeaderProps) {
   const { isLoggedIn, user, logout } = useAuth();
   const { currentLanguage } = useLanguage();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <header className={`sticky top-0 backdrop-blur-xl transition-colors duration-300 ${
@@ -52,31 +61,53 @@ function Header({ isDark, setIsDark }: HeaderProps) {
             
             {isLoggedIn ? (
               <div className="relative group">
-                <div className="flex items-center gap-3 cursor-pointer">
-                  <div className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <img
-                      src={user?.avatar}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <span className="font-medium">{user?.name}</span>
+                <button className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <img
+                    src={user?.avatar}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <span className="font-medium">{user?.name}</span>
+                </button>
+
+                {/* Dropdown Menu */}
+                <div className={`absolute right-0 mt-2 w-56 rounded-lg shadow-lg overflow-hidden transition-all duration-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                  ${isDark ? 'bg-gray-800' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <div className="py-2">
+                    <Link 
+                      to="/notes"
+                      className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
+                        ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      <FileText size={16} className="text-blue-600" />
+                      {currentLanguage === 'TR' ? 'Notlarım' : 'My Notes'}
+                    </Link>
+                    <Link 
+                      to="/exams"
+                      className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
+                        ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      <GraduationCap size={16} className="text-purple-600" />
+                      {currentLanguage === 'TR' ? 'Sınavlarım' : 'My Exams'}
+                    </Link>
+                    <Link 
+                      to="/profile"
+                      className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
+                        ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      <User size={16} className="text-green-600" />
+                      {currentLanguage === 'TR' ? 'Profil' : 'Profile'}
+                    </Link>
+                    <div className={`h-px mx-4 my-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />
+                    <button 
+                      onClick={handleLogout}
+                      className={`flex items-center gap-3 px-4 py-2 text-sm w-full text-left transition-colors
+                        ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} text-red-600`}
+                    >
+                      <LogOut size={16} />
+                      {currentLanguage === 'TR' ? 'Çıkış Yap' : 'Logout'}
+                    </button>
                   </div>
-                </div>
-                <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-gray-200 dark:border-gray-700">
-                  <Link 
-                    to="/profile"
-                    className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <User size={16} />
-                    {currentLanguage === 'TR' ? 'Profil' : 'Profile'}
-                  </Link>
-                  <button 
-                    onClick={logout}
-                    className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600"
-                  >
-                    <LogOut size={16} />
-                    {currentLanguage === 'TR' ? 'Çıkış Yap' : 'Logout'}
-                  </button>
                 </div>
               </div>
             ) : (
