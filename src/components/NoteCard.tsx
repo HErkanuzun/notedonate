@@ -1,0 +1,68 @@
+import React from 'react';
+import { ThumbsUp, Download, Share2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Note } from '../types';
+
+interface NoteCardProps {
+  note: Note;
+  isDark: boolean;
+}
+
+function NoteCard({ note, isDark }: NoteCardProps) {
+  return (
+    <Link to={`/notes/${note.id}`}>
+      <div 
+        className={`group relative overflow-hidden rounded-xl transition-all duration-300 transform hover:-translate-y-2 ${
+          isDark ? 'bg-gray-800/50' : 'bg-white/50'
+        } backdrop-blur-xl border border-opacity-20 ${
+          isDark ? 'border-gray-700' : 'border-gray-200'
+        } shadow-lg hover:shadow-xl`}
+      >
+        <div className="aspect-video overflow-hidden">
+          <img 
+            src={note.imageUrl} 
+            alt={note.title}
+            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+          />
+        </div>
+        
+        <div className="p-6">
+          <div className="flex items-center gap-2 text-sm text-blue-600 mb-2">
+            <span className={`px-3 py-1 rounded-full ${isDark ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+              {note.subject}
+            </span>
+          </div>
+          
+          <h3 className="text-xl font-semibold mb-2 line-clamp-2">
+            {note.title}
+          </h3>
+          
+          <div className="flex items-center gap-2 text-sm opacity-75 mb-4">
+            <span>{note.author}</span>
+            <span>•</span>
+            <span>{new Date(note.date).toLocaleDateString('tr-TR')}</span>
+          </div>
+          
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-1 text-sm">
+              <ThumbsUp size={16} />
+              <span>{note.likes}</span>
+            </div>
+            
+            <div className="flex items-center gap-1 text-sm">
+              <Download size={16} />
+              <span>{note.downloads}</span>
+            </div>
+            
+            <div className="flex items-center gap-1 text-sm">
+              <Share2 size={16} />
+              <span>Paylaş</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export default NoteCard;
