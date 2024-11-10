@@ -3,6 +3,7 @@ import { Filter } from 'lucide-react';
 import SearchBar from '../components/SearchBar';
 import NoteCard from '../components/NoteCard';
 import FilterPanel from '../components/FilterPanel';
+import LoadingCard from '../components/LoadingCard';
 import { popularNotes } from '../data/sampleData';
 import { FilterOptions } from '../types';
 
@@ -13,10 +14,19 @@ interface NotesPageProps {
 function NotesPage({ isDark }: NotesPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     sortBy: 'date',
     sortOrder: 'desc'
   });
+
+  // Simulate loading
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Extract unique values for filter options
   const universities = useMemo(() => 
@@ -43,7 +53,6 @@ function NotesPage({ isDark }: NotesPageProps) {
   const filteredNotes = useMemo(() => {
     let filtered = [...popularNotes];
 
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(note =>
@@ -54,7 +63,6 @@ function NotesPage({ isDark }: NotesPageProps) {
       );
     }
 
-    // Apply other filters
     if (filterOptions.university) {
       filtered = filtered.filter(note => note.university === filterOptions.university);
     }
@@ -68,7 +76,6 @@ function NotesPage({ isDark }: NotesPageProps) {
       filtered = filtered.filter(note => note.semester === filterOptions.semester);
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
       const sortBy = filterOptions.sortBy || 'date';
       const sortOrder = filterOptions.sortOrder === 'asc' ? 1 : -1;
@@ -120,12 +127,18 @@ function NotesPage({ isDark }: NotesPageProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNotes.map((note) => (
-              <NoteCard key={note.id} note={note} isDark={isDark} />
-            ))}
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, index) => (
+                <LoadingCard key={index} isDark={isDark} />
+              ))
+            ) : (
+              filteredNotes.map((note) => (
+                <NoteCard key={note.id} note={note} isDark={isDark} />
+              ))
+            )}
           </div>
 
-          {filteredNotes.length === 0 && (
+          {!isLoading && filteredNotes.length === 0 && (
             <div className="text-center py-12">
               <p className="text-lg opacity-75">Aramanızla eşleşen not bulunamadı.</p>
             </div>

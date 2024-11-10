@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Bot, ChevronLeft, ChevronRight, AlertCircle, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import LoadingSpinner from './LoadingSpinner';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -79,14 +80,7 @@ Bu sayfada önemli noktalar:
                 file={fileUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={onDocumentLoadError}
-                loading={
-                  <div className="flex items-center justify-center p-8">
-                    <div className="animate-pulse text-center">
-                      <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mx-auto mb-4"></div>
-                      <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2 mx-auto"></div>
-                    </div>
-                  </div>
-                }
+                loading={<LoadingSpinner size={32} className="my-8" />}
                 className="flex justify-center"
               >
                 <Page 
@@ -94,11 +88,7 @@ Bu sayfada önemli noktalar:
                   renderTextLayer={true}
                   renderAnnotationLayer={true}
                   className="max-w-full"
-                  loading={
-                    <div className="animate-pulse">
-                      <div className="h-96 bg-gray-300 dark:bg-gray-700 rounded"></div>
-                    </div>
-                  }
+                  loading={<LoadingSpinner size={32} className="my-8" />}
                 />
               </Document>
               
@@ -139,9 +129,16 @@ Bu sayfada önemli noktalar:
         <button
           onClick={requestAIExplanation}
           disabled={isLoadingAI || !!pdfError}
-          className="w-full px-4 py-2 mb-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="w-full px-4 py-2 mb-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          {isLoadingAI ? 'Açıklama Hazırlanıyor...' : 'AI Açıklama İste'}
+          {isLoadingAI ? (
+            <>
+              <LoadingSpinner size={20} />
+              <span>Açıklama Hazırlanıyor...</span>
+            </>
+          ) : (
+            'AI Açıklama İste'
+          )}
         </button>
 
         {error && (

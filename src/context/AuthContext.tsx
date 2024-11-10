@@ -33,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { currentLanguage } = useLanguage();
 
-  // Handle online/offline status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -48,76 +47,104 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as Omit<User, 'id'>;
-            setState({
-              isLoggedIn: true,
-              user: {
-                id: firebaseUser.uid,
+    let unsubscribe: (() => void) | undefined;
+
+    try {
+      if (!auth) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Firebase authentication is not initialized'
+        }));
+        return;
+      }
+
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        try {
+          if (firebaseUser) {
+            const userDocRef = doc(db, 'users', firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            if (userDoc.exists()) {
+              const userData = userDoc.data() as Omit<User, 'id'>;
+              setState({
+                isLoggedIn: true,
+                user: {
+                  id: firebaseUser.uid,
+                  email: firebaseUser.email!,
+                  name: userData.name || firebaseUser.displayName || '',
+                  avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
+                  ...userData
+                },
+                loading: false,
+                error: null
+              });
+            } else {
+              // Create default user document if it doesn't exist
+              const defaultUserData: Omit<User, 'id'> = {
                 email: firebaseUser.email!,
-                name: userData.name || firebaseUser.displayName || '',
-                avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
-                ...userData
-              },
-              loading: false,
-              error: null
-            });
+                name: firebaseUser.displayName || '',
+                avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
+                bio: '',
+                university: '',
+                department: '',
+                joinDate: new Date().toISOString(),
+                notes: [],
+                exams: [],
+                followers: 0,
+                following: 0
+              };
+
+              await setDoc(userDocRef, defaultUserData);
+
+              setState({
+                isLoggedIn: true,
+                user: {
+                  id: firebaseUser.uid,
+                  ...defaultUserData
+                },
+                loading: false,
+                error: null
+              });
+            }
           } else {
-            // Create default user document if it doesn't exist
-            const defaultUserData: Omit<User, 'id'> = {
-              email: firebaseUser.email!,
-              name: firebaseUser.displayName || '',
-              avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
-              bio: '',
-              university: '',
-              department: '',
-              joinDate: new Date().toISOString(),
-              notes: [],
-              exams: [],
-              followers: 0,
-              following: 0
-            };
-
-            await setDoc(userDocRef, defaultUserData);
-
             setState({
-              isLoggedIn: true,
-              user: {
-                id: firebaseUser.uid,
-                ...defaultUserData
-              },
+              isLoggedIn: false,
+              user: null,
               loading: false,
               error: null
             });
           }
-        } else {
-          setState({
-            isLoggedIn: false,
-            user: null,
+        } catch (error) {
+          console.error('Auth state change error:', error);
+          setState(prev => ({
+            ...prev,
             loading: false,
-            error: null
-          });
+            error: 'Authentication error occurred'
+          }));
         }
-      } catch (error) {
-        console.error('Auth state change error:', error);
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Authentication error occurred. Please try again later.'
-        }));
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Auth provider setup error:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to initialize authentication'
+      }));
+    }
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
+    if (!auth) {
+      throw new Error('Authentication is not initialized');
+    }
+
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -138,6 +165,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [currentLanguage]);
 
   const register = useCallback(async (email: string, password: string, name: string) => {
+    if (!auth) {
+      throw new Error('Authentication is not initialized');
+    }
+
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
@@ -178,6 +209,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [currentLanguage]);
 
   const logout = useCallback(async () => {
+    if (!auth) {
+      throw new Error('Authentication is not initialized');
+    }
+
     try {
       await signOut(auth);
       toast.success(currentLanguage === 'TR' ? 'Çıkış yapıldı!' : 'Logged out successfully!');
@@ -189,7 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [currentLanguage]);
 
   const updateUserProfile = useCallback(async (data: Partial<User>) => {
-    if (!auth.currentUser) {
+    if (!auth?.currentUser) {
       throw new Error('No authenticated user');
     }
 
