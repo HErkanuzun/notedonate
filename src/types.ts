@@ -13,6 +13,7 @@ export interface Note {
   year: string;
   semester: string;
   isFavorite?: boolean;
+  driveFileId?: string;
 }
 
 export interface Exam {
@@ -29,6 +30,7 @@ export interface Exam {
   department: string;
   questions?: Question[];
   isFavorite?: boolean;
+  driveFileId?: string;
 }
 
 export interface Question {
@@ -48,6 +50,28 @@ export interface Article {
   content: string;
   tags: string[];
   isFavorite?: boolean;
+  imageUrl: string;
+  university: string;
+  department: string;
+  abstract: string;
+  driveFileId?: string;
+}
+
+export interface Event {
+  id: number;
+  title: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  organizer: string;
+  university: string;
+  department?: string;
+  type: 'academic' | 'social' | 'career' | 'other';
+  imageUrl?: string;
+  registrationUrl?: string;
+  isOnline: boolean;
+  isFeatured: boolean;
 }
 
 export interface User {
@@ -85,4 +109,7 @@ export interface FilterOptions {
   semester?: string;
   sortBy?: 'date' | 'likes' | 'downloads';
   sortOrder?: 'asc' | 'desc';
+  type?: string;
+  startDate?: string;
+  endDate?: string;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Book, Moon, Sun, User, LogOut, FileText, GraduationCap } from 'lucide-react';
+import { Book, Moon, Sun, User, LogOut, FileText, GraduationCap, BookOpen, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import LanguageSelector from './LanguageSelector';
 import { useLanguage } from '../context/LanguageContext';
@@ -41,6 +41,12 @@ function Header({ isDark, setIsDark }: HeaderProps) {
             </Link>
             <Link to="/exams" className="hover:text-blue-600 transition-colors">
               {currentLanguage === 'TR' ? 'Sınavlar' : 'Exams'}
+            </Link>
+            <Link to="/articles" className="hover:text-blue-600 transition-colors">
+              {currentLanguage === 'TR' ? 'Makaleler' : 'Articles'}
+            </Link>
+            <Link to="/events" className="hover:text-blue-600 transition-colors">
+              {currentLanguage === 'TR' ? 'Etkinlikler' : 'Events'}
             </Link>
             <Link to="/about" className="hover:text-blue-600 transition-colors">
               {currentLanguage === 'TR' ? 'Hakkında' : 'About'}
@@ -91,11 +97,27 @@ function Header({ isDark, setIsDark }: HeaderProps) {
                       {currentLanguage === 'TR' ? 'Sınavlarım' : 'My Exams'}
                     </Link>
                     <Link 
+                      to="/articles"
+                      className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
+                        ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      <BookOpen size={16} className="text-green-600" />
+                      {currentLanguage === 'TR' ? 'Makalelerim' : 'My Articles'}
+                    </Link>
+                    <Link 
+                      to="/events"
+                      className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
+                        ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      <Calendar size={16} className="text-yellow-600" />
+                      {currentLanguage === 'TR' ? 'Etkinliklerim' : 'My Events'}
+                    </Link>
+                    <Link 
                       to="/profile"
                       className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
                         ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                     >
-                      <User size={16} className="text-green-600" />
+                      <User size={16} className="text-indigo-600" />
                       {currentLanguage === 'TR' ? 'Profil' : 'Profile'}
                     </Link>
                     <div className={`h-px mx-4 my-2 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`} />

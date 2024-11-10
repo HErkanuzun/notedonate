@@ -4,8 +4,12 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import NotesPage from './pages/NotesPage';
 import ExamsPage from './pages/ExamsPage';
+import ArticlesPage from './pages/ArticlesPage';
+import EventsPage from './pages/EventsPage';
 import NoteDetail from './pages/NoteDetail';
 import ExamDetail from './pages/ExamDetail';
+import ArticleDetail from './pages/ArticleDetail';
+import EventDetail from './pages/EventDetail';
 import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -46,6 +50,10 @@ function App() {
                 <Route path="/notes/:id" element={<NoteDetail isDark={isDark} />} />
                 <Route path="/exams" element={<ExamsPage isDark={isDark} />} />
                 <Route path="/exams/:id" element={<ExamDetail isDark={isDark} />} />
+                <Route path="/articles" element={<ArticlesPage isDark={isDark} />} />
+                <Route path="/articles/:id" element={<ArticleDetail isDark={isDark} />} />
+                <Route path="/events" element={<EventsPage isDark={isDark} />} />
+                <Route path="/events/:id" element={<EventDetail isDark={isDark} />} />
                 <Route path="/about" element={<AboutPage isDark={isDark} />} />
                 <Route path="/profile" element={
                   <PrivateRoute>
