@@ -19,7 +19,8 @@
     "firebase": "^10.8.0",
     "@google-cloud/storage": "^7.9.0",
     "googleapis": "^134.0.0",
-    "date-fns": "^3.5.0"
+    "date-fns": "^3.5.0",
+    "react-toastify": "^10.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",

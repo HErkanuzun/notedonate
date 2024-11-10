@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import NotesPage from './pages/NotesPage';
@@ -23,8 +25,8 @@ function App() {
   const [isDark, setIsDark] = useState(false);
 
   return (
-    <AuthProvider>
-      <LanguageProvider>
+    <LanguageProvider>
+      <AuthProvider>
         <Router>
           <div className={`min-h-screen transition-colors duration-300 ${
             isDark ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
@@ -65,10 +67,24 @@ function App() {
             </div>
 
             <OfflineAlert />
+
+            {/* Toast Container */}
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme={isDark ? 'dark' : 'light'}
+            />
           </div>
         </Router>
-      </LanguageProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

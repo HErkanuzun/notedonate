@@ -10,6 +10,8 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, AuthState } from '../types';
+import { toast } from 'react-toastify';
+import { useLanguage } from './LanguageContext';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
@@ -29,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { currentLanguage } = useLanguage();
 
   // Handle online/offline status
   useEffect(() => {
@@ -118,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast.success(currentLanguage === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = error instanceof Error 
@@ -128,9 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
         error: errorMessage
       }));
+      toast.error(currentLanguage === 'TR' ? 'Giriş başarısız!' : 'Login failed!');
       throw error;
     }
-  }, []);
+  }, [currentLanguage]);
 
   const register = useCallback(async (email: string, password: string, name: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -156,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDocRef = doc(db, 'users', firebaseUser.uid);
       await setDoc(userDocRef, userData);
       
+      toast.success(currentLanguage === 'TR' ? 'Kayıt başarılı!' : 'Registration successful!');
     } catch (error) {
       console.error('Registration error:', error);
       const errorMessage = error instanceof Error 
@@ -166,18 +172,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
         error: errorMessage
       }));
+      toast.error(currentLanguage === 'TR' ? 'Kayıt başarısız!' : 'Registration failed!');
       throw error;
     }
-  }, []);
+  }, [currentLanguage]);
 
   const logout = useCallback(async () => {
     try {
       await signOut(auth);
+      toast.success(currentLanguage === 'TR' ? 'Çıkış yapıldı!' : 'Logged out successfully!');
     } catch (error) {
       console.error('Logout error:', error);
+      toast.error(currentLanguage === 'TR' ? 'Çıkış yapılamadı!' : 'Logout failed!');
       throw error;
     }
-  }, []);
+  }, [currentLanguage]);
 
   const updateUserProfile = useCallback(async (data: Partial<User>) => {
     if (!auth.currentUser) {
@@ -201,6 +210,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           loading: false
         }));
       }
+      
+      toast.success(currentLanguage === 'TR' ? 'Profil güncellendi!' : 'Profile updated successfully!');
     } catch (error) {
       console.error('Profile update error:', error);
       const errorMessage = error instanceof Error 
@@ -211,9 +222,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading: false,
         error: errorMessage
       }));
+      toast.error(currentLanguage === 'TR' ? 'Profil güncellenemedi!' : 'Profile update failed!');
       throw error;
     }
-  }, [state.user]);
+  }, [state.user, currentLanguage]);
 
   return (
     <AuthContext.Provider value={{ ...state, login, logout, register, updateUserProfile, isOnline }}>
