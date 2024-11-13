@@ -1,11 +1,14 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   updateProfile,
-  User as FirebaseUser
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  inMemoryPersistence
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
@@ -14,14 +17,19 @@ import { toast } from 'react-toastify';
 import { useLanguage } from './LanguageContext';
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   updateUserProfile: (data: Partial<User>) => Promise<void>;
   isOnline: boolean;
+  retryConnection: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const RETRY_DELAY = 2000; // 2 seconds
+const MAX_RETRIES = 3;
+const OFFLINE_CACHE_KEY = 'auth_user_cache';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -31,11 +39,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null
   });
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const retryCount = useRef(0);
+  const authUnsubscribe = useRef<(() => void) | null>(null);
   const { currentLanguage } = useLanguage();
 
+  // Cache user data for offline access
+  const cacheUserData = useCallback((userData: User | null) => {
+    if (userData) {
+      localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(userData));
+    } else {
+      localStorage.removeItem(OFFLINE_CACHE_KEY);
+    }
+  }, []);
+
+  // Get cached user data
+  const getCachedUserData = useCallback((): User | null => {
+    const cached = localStorage.getItem(OFFLINE_CACHE_KEY);
+    return cached ? JSON.parse(cached) : null;
+  }, []);
+
+  // Network status monitoring with reconnection logic
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setIsOnline(true);
+      if (retryCount.current > 0) {
+        retryConnection();
+      }
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      // Use cached data when offline
+      const cachedUser = getCachedUserData();
+      if (cachedUser) {
+        setState(prev => ({
+          ...prev,
+          user: cachedUser,
+          isLoggedIn: true,
+          loading: false
+        }));
+      }
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -44,44 +88,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+  }, [getCachedUserData]);
+
+  const retryConnection = useCallback(() => {
+    if (retryCount.current >= MAX_RETRIES) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Maximum retry attempts reached. Please refresh the page.'
+      }));
+      return;
+    }
+
+    setTimeout(() => {
+      retryCount.current += 1;
+      initializeAuth();
+    }, RETRY_DELAY * retryCount.current);
   }, []);
 
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+  const initializeAuth = useCallback(async () => {
+    if (!auth) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Firebase authentication is not initialized'
+      }));
+      return;
+    }
 
     try {
-      if (!auth) {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Firebase authentication is not initialized'
-        }));
-        return;
+      // Clean up previous listener if it exists
+      if (authUnsubscribe.current) {
+        authUnsubscribe.current();
       }
 
-      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Set default persistence to local
+      await setPersistence(auth, browserLocalPersistence);
+
+      authUnsubscribe.current = onAuthStateChanged(auth, async (firebaseUser) => {
         try {
           if (firebaseUser) {
             const userDocRef = doc(db, 'users', firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
             
+            let userData: User;
+            
             if (userDoc.exists()) {
-              const userData = userDoc.data() as Omit<User, 'id'>;
-              setState({
-                isLoggedIn: true,
-                user: {
-                  id: firebaseUser.uid,
-                  email: firebaseUser.email!,
-                  name: userData.name || firebaseUser.displayName || '',
-                  avatar: userData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
-                  ...userData
-                },
-                loading: false,
-                error: null
-              });
+              const docData = userDoc.data() as Omit<User, 'id'>;
+              userData = {
+                id: firebaseUser.uid,
+                email: firebaseUser.email!,
+                name: docData.name || firebaseUser.displayName || '',
+                avatar: docData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
+                ...docData
+              };
             } else {
-              // Create default user document if it doesn't exist
-              const defaultUserData: Omit<User, 'id'> = {
+              userData = {
+                id: firebaseUser.uid,
                 email: firebaseUser.email!,
                 name: firebaseUser.displayName || '',
                 avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
@@ -95,19 +158,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 following: 0
               };
 
-              await setDoc(userDocRef, defaultUserData);
-
-              setState({
-                isLoggedIn: true,
-                user: {
-                  id: firebaseUser.uid,
-                  ...defaultUserData
-                },
-                loading: false,
-                error: null
-              });
+              await setDoc(userDocRef, userData);
             }
+
+            // Cache user data for offline access
+            cacheUserData(userData);
+
+            setState({
+              isLoggedIn: true,
+              user: userData,
+              loading: false,
+              error: null
+            });
+
+            // Reset retry count on successful auth
+            retryCount.current = 0;
           } else {
+            cacheUserData(null);
             setState({
               isLoggedIn: false,
               user: null,
@@ -115,41 +182,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               error: null
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Auth state change error:', error);
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Authentication error occurred'
-          }));
+          
+          if (error.code === 'unavailable') {
+            if (isOnline) {
+              retryConnection();
+            }
+            // Use cached data if available
+            const cachedUser = getCachedUserData();
+            if (cachedUser) {
+              setState(prev => ({
+                ...prev,
+                user: cachedUser,
+                isLoggedIn: true,
+                loading: false
+              }));
+            }
+          } else {
+            setState(prev => ({
+              ...prev,
+              loading: false,
+              error: 'Authentication error occurred',
+              // Maintain current session if user exists
+              isLoggedIn: !!prev.user,
+              user: prev.user
+            }));
+          }
         }
       });
     } catch (error) {
       console.error('Auth provider setup error:', error);
+      // Use cached data if available during initialization error
+      const cachedUser = getCachedUserData();
       setState(prev => ({
         ...prev,
         loading: false,
-        error: 'Failed to initialize authentication'
+        error: 'Failed to initialize authentication',
+        isLoggedIn: !!cachedUser,
+        user: cachedUser
       }));
     }
+  }, [isOnline, retryConnection, cacheUserData, getCachedUserData]);
 
+  useEffect(() => {
+    initializeAuth();
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (authUnsubscribe.current) {
+        authUnsubscribe.current();
       }
     };
-  }, []);
+  }, [initializeAuth]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, rememberMe = true) => {
     if (!auth) {
       throw new Error('Authentication is not initialized');
     }
 
     setState(prev => ({ ...prev, loading: true, error: null }));
     try {
+      // Set persistence based on remember me option
+      await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email, password);
       toast.success(currentLanguage === 'TR' ? 'Giriş başarılı!' : 'Login successful!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -175,7 +271,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       await updateProfile(firebaseUser, { displayName: name });
       
-      const userData: Omit<User, 'id'> = {
+      const userData: User = {
+        id: firebaseUser.uid,
         email,
         name,
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=32&h=32&auto=format&fit=crop&crop=face',
@@ -192,8 +289,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDocRef = doc(db, 'users', firebaseUser.uid);
       await setDoc(userDocRef, userData);
       
+      // Cache user data immediately after registration
+      cacheUserData(userData);
+      
       toast.success(currentLanguage === 'TR' ? 'Kayıt başarılı!' : 'Registration successful!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -206,7 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(currentLanguage === 'TR' ? 'Kayıt başarısız!' : 'Registration failed!');
       throw error;
     }
-  }, [currentLanguage]);
+  }, [currentLanguage, cacheUserData]);
 
   const logout = useCallback(async () => {
     if (!auth) {
@@ -215,13 +315,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await signOut(auth);
+      // Clear cached user data on logout
+      cacheUserData(null);
       toast.success(currentLanguage === 'TR' ? 'Çıkış yapıldı!' : 'Logged out successfully!');
     } catch (error) {
       console.error('Logout error:', error);
       toast.error(currentLanguage === 'TR' ? 'Çıkış yapılamadı!' : 'Logout failed!');
       throw error;
     }
-  }, [currentLanguage]);
+  }, [currentLanguage, cacheUserData]);
 
   const updateUserProfile = useCallback(async (data: Partial<User>) => {
     if (!auth?.currentUser) {
@@ -239,15 +341,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(userDocRef, data, { merge: true });
       
       if (state.user) {
+        const updatedUser = { ...state.user, ...data };
         setState(prev => ({
           ...prev,
-          user: { ...prev.user!, ...data },
+          user: updatedUser,
           loading: false
         }));
+        // Update cached user data
+        cacheUserData(updatedUser);
       }
       
       toast.success(currentLanguage === 'TR' ? 'Profil güncellendi!' : 'Profile updated successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Profile update error:', error);
       const errorMessage = error instanceof Error 
         ? error.message 
@@ -260,10 +365,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(currentLanguage === 'TR' ? 'Profil güncellenemedi!' : 'Profile update failed!');
       throw error;
     }
-  }, [state.user, currentLanguage]);
+  }, [state.user, currentLanguage, cacheUserData]);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, register, updateUserProfile, isOnline }}>
+    <AuthContext.Provider 
+      value={{ 
+        ...state, 
+        login, 
+        logout, 
+        register, 
+        updateUserProfile, 
+        isOnline,
+        retryConnection 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
