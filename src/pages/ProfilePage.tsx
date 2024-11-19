@@ -1,7 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Pencil, 
   FileText, 
   GraduationCap, 
   BookOpen, 
@@ -9,7 +8,8 @@ import {
   Users,
   Calendar,
   Building2,
-  ChevronRight
+  ChevronRight,
+  Plus
 } from 'lucide-react';
 import NoteCard from '../components/NoteCard';
 import ExamCard from '../components/ExamCard';
@@ -18,6 +18,7 @@ import ProfileEditModal from '../components/profile/ProfileEditModal';
 import ProfileSkeleton from '../components/profile/ProfileSkeleton';
 import EmptyState from '../components/EmptyState';
 import FavoriteToggle from '../components/FavoriteToggle';
+import { popularNotes, popularExams, popularArticles } from '../data/sampleData';
 
 interface ProfilePageProps {
   isDark: boolean;
@@ -26,29 +27,9 @@ interface ProfilePageProps {
 type Section = 'notes' | 'exams' | 'articles' | 'favorites';
 
 function ProfilePage({ isDark }: ProfilePageProps) {
-  const { user, loading, updateUserProfile } = useAuth();
+  const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState<Section>('notes');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  const toggleFavorite = useCallback(async (type: 'notes' | 'exams' | 'articles', id: number) => {
-    if (!user) return;
-
-    const favorites = user.favorites || { notes: [], exams: [], articles: [] };
-    const isCurrentlyFavorite = favorites[type].includes(id);
-    
-    const updatedFavorites = {
-      ...favorites,
-      [type]: isCurrentlyFavorite
-        ? favorites[type].filter((itemId: number) => itemId !== id)
-        : [...favorites[type], id]
-    };
-
-    try {
-      await updateUserProfile({ favorites: updatedFavorites });
-    } catch (error) {
-      console.error('Error updating favorites:', error);
-    }
-  }, [user, updateUserProfile]);
 
   if (loading) {
     return <ProfileSkeleton isDark={isDark} />;
@@ -86,109 +67,90 @@ function ProfilePage({ isDark }: ProfilePageProps) {
     );
   }
 
-  const favorites = user.favorites || { notes: [], exams: [], articles: [] };
-  const favoritedNotes = user.notes?.filter(note => favorites.notes.includes(note.id)) || [];
-  const favoritedExams = user.exams?.filter(exam => favorites.exams.includes(exam.id)) || [];
-  const favoritedArticles = user.articles?.filter(article => favorites.articles.includes(article.id)) || [];
-
-  const sidebarSections = [
-    { id: 'notes', icon: FileText, label: 'Notlarım', count: user.notes?.length || 0 },
-    { id: 'exams', icon: GraduationCap, label: 'Sınavlarım', count: user.exams?.length || 0 },
-    { id: 'articles', icon: BookOpen, label: 'Makalelerim', count: user.articles?.length || 0 },
-    { 
-      id: 'favorites', 
-      icon: Star, 
-      label: 'Favorilerim',
-      count: favoritedNotes.length + favoritedExams.length + favoritedArticles.length
-    },
-  ];
-
   const renderContent = () => {
     switch (activeSection) {
       case 'notes':
-        return user.notes?.length ? (
-          user.notes.map(note => (
-            <div key={note.id} className="relative">
-              <FavoriteToggle
-                isFavorite={favorites.notes.includes(note.id)}
-                onToggle={() => toggleFavorite('notes', note.id)}
-              />
-              <NoteCard note={note} isDark={isDark} />
+        return (
+          <div className="p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Notlarım</h2>
+              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <Plus size={20} />
+                Not Ekle
+              </button>
             </div>
-          ))
-        ) : (
-          <EmptyState type="notes" isDark={isDark} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {popularNotes.map((note) => (
+                <div key={note.id} className="relative">
+                  <FavoriteToggle
+                    isFavorite={false}
+                    onToggle={() => {}}
+                  />
+                  <NoteCard note={note} isDark={isDark} />
+                </div>
+              ))}
+            </div>
+          </div>
         );
-
       case 'exams':
-        return user.exams?.length ? (
-          user.exams.map(exam => (
-            <div key={exam.id} className="relative">
-              <FavoriteToggle
-                isFavorite={favorites.exams.includes(exam.id)}
-                onToggle={() => toggleFavorite('exams', exam.id)}
-              />
-              <ExamCard exam={exam} isDark={isDark} />
+        return (
+          <div className="p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Sınavlarım</h2>
+              <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <Plus size={20} />
+                Sınav Ekle
+              </button>
             </div>
-          ))
-        ) : (
-          <EmptyState type="exams" isDark={isDark} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {popularExams.map((exam) => (
+                <div key={exam.id} className="relative">
+                  <FavoriteToggle
+                    isFavorite={false}
+                    onToggle={() => {}}
+                  />
+                  <ExamCard exam={exam} isDark={isDark} />
+                </div>
+              ))}
+            </div>
+          </div>
         );
-
       case 'articles':
-        return user.articles?.length ? (
-          user.articles.map(article => (
-            <div key={article.id} className="relative">
-              <FavoriteToggle
-                isFavorite={favorites.articles.includes(article.id)}
-                onToggle={() => toggleFavorite('articles', article.id)}
-              />
-              <ArticleCard article={article} isDark={isDark} />
+        return (
+          <div className="p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Makalelerim</h2>
+              <button className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <Plus size={20} />
+                Makale Ekle
+              </button>
             </div>
-          ))
-        ) : (
-          <EmptyState type="articles" isDark={isDark} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {popularArticles.map((article) => (
+                <div key={article.id} className="relative">
+                  <FavoriteToggle
+                    isFavorite={false}
+                    onToggle={() => {}}
+                  />
+                  <ArticleCard article={article} isDark={isDark} />
+                </div>
+              ))}
+            </div>
+          </div>
         );
-
       case 'favorites':
-        return (favoritedNotes.length || favoritedExams.length || favoritedArticles.length) ? (
-          <>
-            {favoritedNotes.map(note => (
-              <div key={note.id} className="relative">
-                <FavoriteToggle
-                  isFavorite={true}
-                  onToggle={() => toggleFavorite('notes', note.id)}
-                />
-                <NoteCard note={note} isDark={isDark} />
-              </div>
-            ))}
-            {favoritedExams.map(exam => (
-              <div key={exam.id} className="relative">
-                <FavoriteToggle
-                  isFavorite={true}
-                  onToggle={() => toggleFavorite('exams', exam.id)}
-                />
-                <ExamCard exam={exam} isDark={isDark} />
-              </div>
-            ))}
-            {favoritedArticles.map(article => (
-              <div key={article.id} className="relative">
-                <FavoriteToggle
-                  isFavorite={true}
-                  onToggle={() => toggleFavorite('articles', article.id)}
-                />
-                <ArticleCard article={article} isDark={isDark} />
-              </div>
-            ))}
-          </>
-        ) : (
-          <EmptyState type="favorites" isDark={isDark} />
-        );
-
+        return <EmptyState type="favorites" isDark={isDark} />;
       default:
         return null;
     }
   };
+
+  const sidebarSections = [
+    { id: 'notes', icon: FileText, label: 'Notlarım', count: popularNotes.length },
+    { id: 'exams', icon: GraduationCap, label: 'Sınavlarım', count: popularExams.length },
+    { id: 'articles', icon: BookOpen, label: 'Makalelerim', count: popularArticles.length },
+    { id: 'favorites', icon: Star, label: 'Favorilerim', count: 0 },
+  ];
 
   return (
     <div className="min-h-screen flex">
@@ -214,7 +176,6 @@ function ProfilePage({ isDark }: ProfilePageProps) {
             className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm rounded-lg 
               bg-blue-600 text-white hover:bg-blue-700 transition-colors"
           >
-            <Pencil size={16} />
             Profili Düzenle
           </button>
         </div>
@@ -266,19 +227,7 @@ function ProfilePage({ isDark }: ProfilePageProps) {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-8">
-          {/* Section Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-2xl font-bold">
-              {sidebarSections.find(s => s.id === activeSection)?.label}
-            </h1>
-          </div>
-
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {renderContent()}
-          </div>
-        </div>
+        {renderContent()}
       </div>
 
       {/* Edit Profile Modal */}

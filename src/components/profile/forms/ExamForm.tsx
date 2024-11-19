@@ -1,51 +1,51 @@
-import React, { useState } from 'react';
-import { X, Upload, Loader2, AlertCircle } from 'lucide-react';
-import { uploadExam } from '../../services/ExamService';
-import { useAuth } from '../../context/AuthContext';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { X, Upload, Loader2 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
+import { uploadExam } from '../../../services/ExamService';
 
-interface ExamUploadModalProps {
-  isDark: boolean;
+const schema = yup.object({
+  title: yup.string().required('Başlık gereklidir'),
+  subject: yup.string().required('Ders adı gereklidir'),
+  professor: yup.string().required('Öğretim üyesi gereklidir'),
+  description: yup.string(),
+  term: yup.string().required('Dönem gereklidir'),
+  year: yup.string().required('Yıl gereklidir'),
+  file: yup.mixed().required('Dosya gereklidir')
+}).required();
+
+interface ExamFormProps {
   onClose: () => void;
   onSuccess: () => void;
+  isDark: boolean;
 }
 
-function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
+export default function ExamForm({ onClose, onSuccess, isDark }: ExamFormProps) {
   const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    subject: '',
-    professor: '',
-    description: '',
-    university: user?.university || '',
-    department: user?.department || '',
-    term: 'Bahar',
-    year: new Date().getFullYear().toString()
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    resolver: yupResolver(schema)
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !user) return;
-
-    setIsLoading(true);
-    setError('');
+  const onSubmit = async (data: any) => {
+    if (!user) return;
 
     try {
-      await uploadExam({
-        ...formData,
+      const examData = {
+        ...data,
         authorId: user.id,
+        university: user.university || '',
+        department: user.department || '',
         likes: 0,
         downloads: 0
-      }, file);
+      };
 
+      await uploadExam(examData, data.file[0]);
       onSuccess();
       onClose();
-    } catch (err) {
-      setError('Sınav yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error('Exam upload error:', error);
     }
   };
 
@@ -71,30 +71,23 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
               <div className="p-8">
                 <h2 className="text-2xl font-bold mb-6">Sınav Ekle</h2>
 
-                {error && (
-                  <div className="mb-6 p-4 rounded-lg bg-red-100/10 border border-red-600/20 flex items-center gap-2 text-red-600">
-                    <AlertCircle size={20} />
-                    <p>{error}</p>
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Sınav Başlığı
                     </label>
                     <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      {...register('title')}
                       className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                         ${isDark 
                           ? 'bg-gray-800 focus:bg-gray-700' 
                           : 'bg-gray-50 focus:bg-white'
                         } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
                         focus:ring-2 focus:ring-purple-500`}
-                      required
                     />
+                    {errors.title && (
+                      <p className="mt-1 text-sm text-red-500">{errors.title.message}</p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -103,17 +96,17 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                         Ders
                       </label>
                       <input
-                        type="text"
-                        value={formData.subject}
-                        onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                        {...register('subject')}
                         className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                           ${isDark 
                             ? 'bg-gray-800 focus:bg-gray-700' 
                             : 'bg-gray-50 focus:bg-white'
                           } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
                           focus:ring-2 focus:ring-purple-500`}
-                        required
                       />
+                      {errors.subject && (
+                        <p className="mt-1 text-sm text-red-500">{errors.subject.message}</p>
+                      )}
                     </div>
 
                     <div>
@@ -121,55 +114,17 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                         Öğretim Üyesi
                       </label>
                       <input
-                        type="text"
-                        value={formData.professor}
-                        onChange={(e) => setFormData(prev => ({ ...prev, professor: e.target.value }))}
+                        {...register('professor')}
                         className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                           ${isDark 
                             ? 'bg-gray-800 focus:bg-gray-700' 
                             : 'bg-gray-50 focus:bg-white'
                           } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
                           focus:ring-2 focus:ring-purple-500`}
-                        required
                       />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Üniversite
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.university}
-                        onChange={(e) => setFormData(prev => ({ ...prev, university: e.target.value }))}
-                        className={`w-full px-4 py-3 rounded-lg outline-none transition-all
-                          ${isDark 
-                            ? 'bg-gray-800 focus:bg-gray-700' 
-                            : 'bg-gray-50 focus:bg-white'
-                          } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Bölüm
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.department}
-                        onChange={(e) => setFormData(prev => ({ ...prev, department: e.target.value }))}
-                        className={`w-full px-4 py-3 rounded-lg outline-none transition-all
-                          ${isDark 
-                            ? 'bg-gray-800 focus:bg-gray-700' 
-                            : 'bg-gray-50 focus:bg-white'
-                          } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
-                        required
-                      />
+                      {errors.professor && (
+                        <p className="mt-1 text-sm text-red-500">{errors.professor.message}</p>
+                      )}
                     </div>
                   </div>
 
@@ -180,16 +135,18 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                       </label>
                       <input
                         type="number"
-                        value={formData.year}
-                        onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
+                        {...register('year')}
+                        defaultValue={new Date().getFullYear()}
                         className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                           ${isDark 
                             ? 'bg-gray-800 focus:bg-gray-700' 
                             : 'bg-gray-50 focus:bg-white'
                           } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
                           focus:ring-2 focus:ring-purple-500`}
-                        required
                       />
+                      {errors.year && (
+                        <p className="mt-1 text-sm text-red-500">{errors.year.message}</p>
+                      )}
                     </div>
 
                     <div>
@@ -197,20 +154,21 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                         Dönem
                       </label>
                       <select
-                        value={formData.term}
-                        onChange={(e) => setFormData(prev => ({ ...prev, term: e.target.value }))}
+                        {...register('term')}
                         className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                           ${isDark 
                             ? 'bg-gray-800 focus:bg-gray-700' 
                             : 'bg-gray-50 focus:bg-white'
                           } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
                           focus:ring-2 focus:ring-purple-500`}
-                        required
                       >
                         <option value="Güz">Güz</option>
                         <option value="Bahar">Bahar</option>
                         <option value="Yaz">Yaz</option>
                       </select>
+                      {errors.term && (
+                        <p className="mt-1 text-sm text-red-500">{errors.term.message}</p>
+                      )}
                     </div>
                   </div>
 
@@ -219,8 +177,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                       Açıklama
                     </label>
                     <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      {...register('description')}
                       className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                         ${isDark 
                           ? 'bg-gray-800 focus:bg-gray-700' 
@@ -237,11 +194,10 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                     </label>
                     <input
                       type="file"
+                      {...register('file')}
                       accept=".pdf"
-                      onChange={(e) => setFile(e.target.files?.[0] || null)}
                       className="hidden"
                       id="pdf-upload"
-                      required
                     />
                     <label
                       htmlFor="pdf-upload"
@@ -253,18 +209,21 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                         }`}
                     >
                       <Upload size={20} />
-                      {file ? file.name : 'PDF dosyası seçin'}
+                      PDF dosyası seçin
                     </label>
+                    {errors.file && (
+                      <p className="mt-1 text-sm text-red-500">{errors.file.message}</p>
+                    )}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={isLoading || !file}
+                    disabled={isSubmitting}
                     className="w-full py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 
                       transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                       flex items-center justify-center gap-2"
                   >
-                    {isLoading ? (
+                    {isSubmitting ? (
                       <>
                         <Loader2 size={20} className="animate-spin" />
                         Yükleniyor...
@@ -285,5 +244,3 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
     </div>
   );
 }
-
-export default ExamUploadModal;

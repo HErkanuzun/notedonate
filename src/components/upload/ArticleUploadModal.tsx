@@ -1,28 +1,27 @@
 import React, { useState } from 'react';
 import { X, Upload, Loader2, AlertCircle } from 'lucide-react';
-import { uploadExam } from '../../services/ExamService';
+import { uploadArticle } from '../../services/ArticleService';
 import { useAuth } from '../../context/AuthContext';
 
-interface ExamUploadModalProps {
+interface ArticleUploadModalProps {
   isDark: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
+function ArticleUploadModal({ isDark, onClose, onSuccess }: ArticleUploadModalProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    subject: '',
-    professor: '',
-    description: '',
+    abstract: '',
+    content: '',
+    tags: '',
+    imageUrl: '',
     university: user?.university || '',
-    department: user?.department || '',
-    term: 'Bahar',
-    year: new Date().getFullYear().toString()
+    department: user?.department || ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,17 +32,20 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
     setError('');
 
     try {
-      await uploadExam({
+      await uploadArticle({
         ...formData,
+        author: user.name,
         authorId: user.id,
+        date: new Date().toISOString(),
         likes: 0,
-        downloads: 0
+        downloads: 0,
+        tags: formData.tags.split(',').map(tag => tag.trim())
       }, file);
 
       onSuccess();
       onClose();
     } catch (err) {
-      setError('Sınav yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      setError('Makale yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +61,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
             <div className={`relative rounded-xl shadow-2xl ${
               isDark ? 'bg-gray-900' : 'bg-white'
             }`}>
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-600" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-600 to-blue-600" />
 
               <button
                 onClick={onClose}
@@ -69,7 +71,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
               </button>
 
               <div className="p-8">
-                <h2 className="text-2xl font-bold mb-6">Sınav Ekle</h2>
+                <h2 className="text-2xl font-bold mb-6">Makale Ekle</h2>
 
                 {error && (
                   <div className="mb-6 p-4 rounded-lg bg-red-100/10 border border-red-600/20 flex items-center gap-2 text-red-600">
@@ -81,7 +83,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Sınav Başlığı
+                      Makale Başlığı
                     </label>
                     <input
                       type="text"
@@ -92,47 +94,45 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                           ? 'bg-gray-800 focus:bg-gray-700' 
                           : 'bg-gray-50 focus:bg-white'
                         } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                        focus:ring-2 focus:ring-purple-500`}
+                        focus:ring-2 focus:ring-green-500`}
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Ders
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.subject}
-                        onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                        className={`w-full px-4 py-3 rounded-lg outline-none transition-all
-                          ${isDark 
-                            ? 'bg-gray-800 focus:bg-gray-700' 
-                            : 'bg-gray-50 focus:bg-white'
-                          } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Özet
+                    </label>
+                    <textarea
+                      value={formData.abstract}
+                      onChange={(e) => setFormData(prev => ({ ...prev, abstract: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg outline-none transition-all
+                        ${isDark 
+                          ? 'bg-gray-800 focus:bg-gray-700' 
+                          : 'bg-gray-50 focus:bg-white'
+                        } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
+                        focus:ring-2 focus:ring-green-500`}
+                      rows={3}
+                      required
+                    />
+                  </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Öğretim Üyesi
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.professor}
-                        onChange={(e) => setFormData(prev => ({ ...prev, professor: e.target.value }))}
-                        className={`w-full px-4 py-3 rounded-lg outline-none transition-all
-                          ${isDark 
-                            ? 'bg-gray-800 focus:bg-gray-700' 
-                            : 'bg-gray-50 focus:bg-white'
-                          } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      İçerik (Markdown)
+                    </label>
+                    <textarea
+                      value={formData.content}
+                      onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg outline-none transition-all
+                        ${isDark 
+                          ? 'bg-gray-800 focus:bg-gray-700' 
+                          : 'bg-gray-50 focus:bg-white'
+                        } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
+                        focus:ring-2 focus:ring-green-500`}
+                      rows={6}
+                      required
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -149,7 +149,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                             ? 'bg-gray-800 focus:bg-gray-700' 
                             : 'bg-gray-50 focus:bg-white'
                           } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
+                          focus:ring-2 focus:ring-green-500`}
                         required
                       />
                     </div>
@@ -167,67 +167,46 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                             ? 'bg-gray-800 focus:bg-gray-700' 
                             : 'bg-gray-50 focus:bg-white'
                           } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
+                          focus:ring-2 focus:ring-green-500`}
                         required
                       />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Yıl
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.year}
-                        onChange={(e) => setFormData(prev => ({ ...prev, year: e.target.value }))}
-                        className={`w-full px-4 py-3 rounded-lg outline-none transition-all
-                          ${isDark 
-                            ? 'bg-gray-800 focus:bg-gray-700' 
-                            : 'bg-gray-50 focus:bg-white'
-                          } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Dönem
-                      </label>
-                      <select
-                        value={formData.term}
-                        onChange={(e) => setFormData(prev => ({ ...prev, term: e.target.value }))}
-                        className={`w-full px-4 py-3 rounded-lg outline-none transition-all
-                          ${isDark 
-                            ? 'bg-gray-800 focus:bg-gray-700' 
-                            : 'bg-gray-50 focus:bg-white'
-                          } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                          focus:ring-2 focus:ring-purple-500`}
-                        required
-                      >
-                        <option value="Güz">Güz</option>
-                        <option value="Bahar">Bahar</option>
-                        <option value="Yaz">Yaz</option>
-                      </select>
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Açıklama
+                      Etiketler (virgülle ayırın)
                     </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    <input
+                      type="text"
+                      value={formData.tags}
+                      onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
                       className={`w-full px-4 py-3 rounded-lg outline-none transition-all
                         ${isDark 
                           ? 'bg-gray-800 focus:bg-gray-700' 
                           : 'bg-gray-50 focus:bg-white'
                         } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
-                        focus:ring-2 focus:ring-purple-500`}
-                      rows={3}
+                        focus:ring-2 focus:ring-green-500`}
+                      placeholder="yapay zeka, eğitim, teknoloji"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Kapak Görseli URL (opsiyonel)
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.imageUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                      className={`w-full px-4 py-3 rounded-lg outline-none transition-all
+                        ${isDark 
+                          ? 'bg-gray-800 focus:bg-gray-700' 
+                          : 'bg-gray-50 focus:bg-white'
+                        } border ${isDark ? 'border-gray-700' : 'border-gray-200'}
+                        focus:ring-2 focus:ring-green-500`}
+                      placeholder="https://example.com/image.jpg"
                     />
                   </div>
 
@@ -260,7 +239,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                   <button
                     type="submit"
                     disabled={isLoading || !file}
-                    className="w-full py-3 px-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 
+                    className="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 
                       transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                       flex items-center justify-center gap-2"
                   >
@@ -272,7 +251,7 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
                     ) : (
                       <>
                         <Upload size={20} />
-                        Sınavı Yükle
+                        Makaleyi Yükle
                       </>
                     )}
                   </button>
@@ -286,4 +265,4 @@ function ExamUploadModal({ isDark, onClose, onSuccess }: ExamUploadModalProps) {
   );
 }
 
-export default ExamUploadModal;
+export default ArticleUploadModal;

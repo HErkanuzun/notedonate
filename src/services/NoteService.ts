@@ -6,13 +6,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const uploadNote = async (note: Omit<Note, 'id'>, file: File) => {
   try {
-    // PDF dosyasını Storage'a yükle
+    // Upload PDF to Storage
     const fileId = uuidv4();
     const fileRef = ref(storage, `notes/${fileId}`);
     await uploadBytes(fileRef, file);
     const fileUrl = await getDownloadURL(fileRef);
 
-    // Note verisini Firestore'a ekle
+    // Add note data to Firestore
     const noteData = {
       ...note,
       fileUrl,

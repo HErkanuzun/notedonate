@@ -6,13 +6,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 export const uploadExam = async (exam: Omit<Exam, 'id'>, file: File) => {
   try {
-    // PDF dosyasını Storage'a yükle
+    // Upload PDF to Storage
     const fileId = uuidv4();
     const fileRef = ref(storage, `exams/${fileId}`);
     await uploadBytes(fileRef, file);
     const fileUrl = await getDownloadURL(fileRef);
 
-    // Exam verisini Firestore'a ekle
+    // Add exam data to Firestore
     const examData = {
       ...exam,
       fileUrl,

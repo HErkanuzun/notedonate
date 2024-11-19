@@ -47,7 +47,7 @@ function Header({ isDark, setIsDark }: HeaderProps) {
             ${isDark ? 'bg-gray-800' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="py-2">
               <Link 
-                to="/notes"
+                to="/profile?section=notes"
                 className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
                   ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
@@ -55,7 +55,7 @@ function Header({ isDark, setIsDark }: HeaderProps) {
                 {currentLanguage === 'TR' ? 'Notlarım' : 'My Notes'}
               </Link>
               <Link 
-                to="/exams"
+                to="/profile?section=exams"
                 className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
                   ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
@@ -63,7 +63,7 @@ function Header({ isDark, setIsDark }: HeaderProps) {
                 {currentLanguage === 'TR' ? 'Sınavlarım' : 'My Exams'}
               </Link>
               <Link 
-                to="/articles"
+                to="/profile?section=articles"
                 className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
                   ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
@@ -71,12 +71,12 @@ function Header({ isDark, setIsDark }: HeaderProps) {
                 {currentLanguage === 'TR' ? 'Makalelerim' : 'My Articles'}
               </Link>
               <Link 
-                to="/events"
+                to="/profile?section=favorites"
                 className={`flex items-center gap-3 px-4 py-2 text-sm transition-colors
                   ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
               >
                 <Calendar size={16} className="text-yellow-600" />
-                {currentLanguage === 'TR' ? 'Etkinliklerim' : 'My Events'}
+                {currentLanguage === 'TR' ? 'Favorilerim' : 'My Favorites'}
               </Link>
               <Link 
                 to="/profile"

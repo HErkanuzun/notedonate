@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { X, Loader2, Camera, AlertCircle } from 'lucide-react';
+import { X, Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { User } from '../../types';
 
 interface ProfileEditModalProps {
   isDark: boolean;
@@ -9,7 +8,7 @@ interface ProfileEditModalProps {
 }
 
 function ProfileEditModal({ isDark, onClose }: ProfileEditModalProps) {
-  const { user, updateProfile } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -25,7 +24,7 @@ function ProfileEditModal({ isDark, onClose }: ProfileEditModalProps) {
     setIsLoading(true);
 
     try {
-      await updateProfile(formData);
+      await updateUserProfile(formData);
       onClose();
     } catch (err) {
       setError('Profil güncellenirken bir hata oluştu. Lütfen tekrar deneyin.');
