@@ -13,6 +13,9 @@ import ExamDetail from './pages/ExamDetail';
 import ArticleDetail from './pages/ArticleDetail';
 import EventDetail from './pages/EventDetail';
 import ProfilePage from './pages/ProfilePage';
+import ProfileNotesPage from './pages/profile/ProfileNotesPage';
+import ProfileExamsPage from './pages/profile/ProfileExamsPage';
+import ProfileArticlesPage from './pages/profile/ProfileArticlesPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AboutPage from './pages/AboutPage';
@@ -60,6 +63,21 @@ function App() {
                 <Route path="/profile" element={
                   <PrivateRoute>
                     <ProfilePage isDark={isDark} />
+                  </PrivateRoute>
+                } />
+                <Route path="/profile/notes" element={
+                  <PrivateRoute>
+                    <ProfileNotesPage isDark={isDark} />
+                  </PrivateRoute>
+                } />
+                <Route path="/profile/exams" element={
+                  <PrivateRoute>
+                    <ProfileExamsPage isDark={isDark} />
+                  </PrivateRoute>
+                } />
+                <Route path="/profile/articles" element={
+                  <PrivateRoute>
+                    <ProfileArticlesPage isDark={isDark} />
                   </PrivateRoute>
                 } />
                 <Route path="*" element={<Navigate to="/" replace />} />
