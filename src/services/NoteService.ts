@@ -4,38 +4,27 @@ import { db, storage } from '../config/firebase';
 import { Note } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-export const uploadNote = async (noteData: Omit<Note, 'id'>, file: File) => {
+const uploadNote = async (noteData, file) => {
   try {
-    // Generate unique ID for storage path
-    const fileId = uuidv4();
-    const fileRef = ref(storage, `notes/${fileId}`);
+    // Firebase Storage'a dosya yüklemek için bir referans oluşturuyoruz
+    const storageRef = ref(storage, `notes/${file.name}`);
 
-    // Upload file to Firebase Storage
-    const uploadResult = await uploadBytes(fileRef, file);
-    const fileUrl = await getDownloadURL(uploadResult.ref);
+    // Dosyayı Firebase Storage'a yükleme
+    const uploadResult = await uploadBytes(storageRef, file);
+    console.log("Dosya Firebase Storage'a yüklendi:", uploadResult);
 
-    // Add note data to Firestore
-    const docRef = await addDoc(collection(db, 'notes'), {
+    // Dosya yüklendikten sonra Firestore'a not verilerini ekliyoruz
+    const noteRef = collection(db, "notes");
+    await addDoc(noteRef, {
       ...noteData,
-      fileUrl,
-      fileName: file.name,
-      fileId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      fileUrl: `gs://${uploadResult.ref.bucket}/${uploadResult.ref.fullPath}`, // Yüklenen dosyanın URL'sini veritabanına kaydediyoruz
     });
-
-    return {
-      id: docRef.id,
-      ...noteData,
-      fileUrl,
-      fileName: file.name,
-      fileId
-    };
+    console.log("Not Firestore'a kaydedildi!");
   } catch (error) {
-    console.error('Note upload error:', error);
-    throw new Error('Failed to upload note');
+    console.error("Hata oluştu:", error);
   }
 };
+
 
 export const getNotes = async (userId?: string) => {
   try {

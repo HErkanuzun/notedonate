@@ -51,10 +51,10 @@ export default function NoteForm({ onClose, onSuccess, isDark }: NoteFormProps) 
   };
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-509">
       <div className="fixed inset-0 backdrop-blur-md bg-black/50" onClick={onClose} />
       
-      <div className="fixed inset-0 z-[60] overflow-y-auto">
+      <div className="fixed inset-0 z-[609] overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
           <div className="relative w-full max-w-2xl">
             <div className={`relative rounded-xl shadow-2xl ${

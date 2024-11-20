@@ -21,6 +21,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+
 // Enable offline persistence for Firestore
 const enableOffline = async () => {
   try {
