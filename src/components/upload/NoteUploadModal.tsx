@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { uploadNote } from '../../services/NoteService';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
 
 interface NoteUploadModalProps {
   isDark: boolean;
@@ -26,13 +27,16 @@ function NoteUploadModal({ isDark, onClose, onSuccess }: NoteUploadModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !user) return;
+    if (!file || !user) {
+      setError('Lütfen bir PDF dosyası seçin.');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
 
     try {
-      await uploadNote({
+      const noteData = {
         title: formData.title,
         subject: formData.subject,
         author: user.name,
@@ -44,15 +48,36 @@ function NoteUploadModal({ isDark, onClose, onSuccess }: NoteUploadModalProps) {
         department: formData.department,
         year: formData.year,
         semester: formData.semester,
-        description: formData.description
-      }, file);
+        description: formData.description,
+        imageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&auto=format&fit=crop'
+      };
 
+      await uploadNote(noteData, file);
+      toast.success('Not başarıyla yüklendi!');
       onSuccess();
       onClose();
     } catch (err) {
+      console.error('Upload error:', err);
       setError('Not yüklenirken bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error('Not yüklenemedi!');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile.type !== 'application/pdf') {
+        setError('Lütfen sadece PDF dosyası yükleyin.');
+        return;
+      }
+      if (selectedFile.size > 10 * 1024 * 1024) { // 10MB limit
+        setError('Dosya boyutu 10MB\'dan küçük olmalıdır.');
+        return;
+      }
+      setFile(selectedFile);
+      setError('');
     }
   };
 
@@ -225,7 +250,7 @@ function NoteUploadModal({ isDark, onClose, onSuccess }: NoteUploadModalProps) {
                     <input
                       type="file"
                       accept=".pdf"
-                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                      onChange={handleFileChange}
                       className="hidden"
                       id="pdf-upload"
                       required
@@ -242,6 +267,9 @@ function NoteUploadModal({ isDark, onClose, onSuccess }: NoteUploadModalProps) {
                       <Upload size={20} />
                       {file ? file.name : 'PDF dosyası seçin'}
                     </label>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Maksimum dosya boyutu: 10MB
+                    </p>
                   </div>
 
                   <button

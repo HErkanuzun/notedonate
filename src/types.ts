@@ -1,3 +1,15 @@
+export interface UserStats {
+  activeTime: number; // In minutes
+  notesAdded: number;
+  examsCreated: number;
+  examsCompleted: number;
+  lastActive: string;
+  joinDate: string;
+  totalLikes: number;
+  totalDownloads: number;
+  streak: number; // Days in a row active
+}
+
 export interface Note {
   id: number;
   title: string;
@@ -93,6 +105,7 @@ export interface User {
   };
   followers: number;
   following: number;
+  stats?: UserStats;
 }
 
 export interface AuthState {

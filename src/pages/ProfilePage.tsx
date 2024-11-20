@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
@@ -17,7 +17,9 @@ import {
 import { useAuth } from '../context/AuthContext';
 import ProfileEditModal from '../components/profile/ProfileEditModal';
 import ProfileSkeleton from '../components/profile/ProfileSkeleton';
-import EmptyState from '../components/EmptyState';
+import UserStatistics from '../components/profile/UserStatistics';
+import { getUserStats } from '../services/UserStatsService';
+import { UserStats } from '../types';
 
 interface ProfilePageProps {
   isDark: boolean;
@@ -27,9 +29,28 @@ function ProfilePage({ isDark }: ProfilePageProps) {
   const { user, loading } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
   const navigate = useNavigate();
 
-  if (loading) {
+  useEffect(() => {
+    const loadUserStats = async () => {
+      if (user) {
+        try {
+          const stats = await getUserStats(user.id);
+          setUserStats(stats);
+        } catch (error) {
+          console.error('Error loading user stats:', error);
+        } finally {
+          setIsStatsLoading(false);
+        }
+      }
+    };
+
+    loadUserStats();
+  }, [user]);
+
+  if (loading || isStatsLoading) {
     return <ProfileSkeleton isDark={isDark} />;
   }
 
@@ -204,7 +225,7 @@ function ProfilePage({ isDark }: ProfilePageProps) {
 
         {/* Content Area */}
         <div className="p-6">
-          <EmptyState type="notes" isDark={isDark} />
+          {userStats && <UserStatistics stats={userStats} isDark={isDark} />}
         </div>
       </div>
 
